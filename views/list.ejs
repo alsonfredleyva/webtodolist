@@ -1,0 +1,68 @@
+<%- include('partials/header'); -%>
+
+<main id="box">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class="date">
+        <h1><%= date %></h1>
+    </div>
+    
+    <div class="list" style="max-height: auto; ">
+        <form class="form" action="/list" method="post">
+            <textarea name="item" id="newItem" placeholder="Add your notes here..." style="color: #000000; font-size: 14px; font-weight: normal; font-style: italic; opacity: 1; background-color: aliceblue; border: 2px solid #343148FF; border-radius: 20px; padding: 10px;" rows="3"></textarea>
+            <button class="btn123" type="submit" onclick="showPopup('Task added!', 'add-popup')">+</button>
+            <div id="add-popup" class="popup">Task added!</div>
+        </form>
+        <% newItem.forEach((item) => { %>
+            <div class="item-container">
+                <div class="item">
+                    <form action="/update/<%= item._id %>" method="post" class="item-update-form">
+                        <input type="hidden" name="itemId" value="<%= item._id %>">
+                        <textarea name="updatedItem" id="updatedItem<%= item._id %>" placeholder="Update notes here..." style="color: #000000; font-size: 14px; font-weight: normal; font-style: italic; opacity: 1; background-color: aliceblue; border: 2px solid #343148FF; border-radius: 20px; padding: 10px;" rows="3" autocomplete="off" readonly><%= item.item %></textarea>
+                        <button id="editButton<%= item._id %>" class="btn12" style="position: relative; top: -40px; right: 4px;"  auto; display: block;" type="button" onclick="toggleEdit('updatedItem<%= item._id %>', 'confirmButton<%= item._id %>')">Edit</button>
+                        <button id="confirmButton<%= item._id %>" class="btn49" style="position: relative; top: -5px; right: 4px; display: none;"  auto; display: block;" type="button" onclick="confirmEdit('updatedItem<%= item._id %>', 'confirmButton<%= item._id %>')">Confirm Edit</button>
+                        <div class="popup" id="update-popup<%= item._id %>">Task Updated!</div>
+                    </form>
+
+                    <form action="/delete" method="post" class="item-delete-form">
+                        <div class="item">
+                            <input type="hidden"  name="delete" value="<%= item._id %>">
+                            <button class="btn"  style="position: relative; top: -17px; right: -5px;" type="submit" onclick="showPopup('Task Deleted!', 'add-popup')">Del</button>
+                            <div class="popup">Task Deleted!</div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</main>
+
+<script>
+    function showPopup(message, popupId) {
+        var popup = document.getElementById(popupId);
+        popup.textContent = message;
+        popup.style.display = "block";
+
+        // Hide the pop-up message after 10 seconds
+        setTimeout(function() {
+            popup.style.display = "none";
+        }, 100);
+    }
+
+    function toggleEdit(textareaId, confirmButtonId) {
+        var textarea = document.getElementById(textareaId);
+        var confirmButton = document.getElementById(confirmButtonId);
+        textarea.readOnly = !textarea.readOnly;
+        confirmButton.style.display = textarea.readOnly ? 'none' : 'block';
+    }
+
+    function confirmEdit(textareaId, confirmButtonId) {
+        var textarea = document.getElementById(textareaId);
+        var confirmButton = document.getElementById(confirmButtonId);
+        textarea.readOnly = true;
+        confirmButton.style.display = 'none'; // Hide the Confirm Edit button
+        var itemId = textareaId.replace('updatedItem', '');
+        var popupId = 'update-popup' + itemId;
+        showPopup('Task Updated!', popupId);
+    }
+</script>
+<%- include('partials/footer'); -%>

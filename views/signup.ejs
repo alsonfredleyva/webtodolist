@@ -1,0 +1,24 @@
+<%- include('partials/header2'); -%>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class="wrapper">
+        <div class="form-wrapper sign-up">
+            <form action="/signup" method="POST">
+                <h2>Welcome Onboard!</h2>
+                <div class="input-group">
+                    <input type="email" name="email" id="">
+                    <label for="">Email</label>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" id="">
+                    <label for="">Password</label>
+                </div>
+                <button type="submit" class="btnnn">Register</button>
+                <div class="sign-link">
+                    <p>Already have an account? <a href="/signin" class="signIn-link">Login</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('partials/footer'); -%>
+    

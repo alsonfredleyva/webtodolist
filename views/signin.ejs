@@ -1,0 +1,54 @@
+<%- include('partials/header2'); -%>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<div class="wrapper">
+    <div class="form-wrapper sign-in">
+        <form action="/signin" method="post" onsubmit="return validateForm()">
+            <h2>Welcome Back!</h2>
+            <div class="input-group">
+                <input type="email" name="email" id="">
+                <label for="">Email</label>
+            </div>
+            <div class="input-group">
+                <input type="password" name="password" id="">
+                <label for="">Password</label>
+            </div>
+            <div class="forgot-pass">
+                <a href="#">Forgot Password?</a>
+            </div>
+            <button type="submit" class="btnnn">Login</button>
+            <div id="login-popup" class="popup">Logging in...</div>
+            <div class="sign-link">
+                <p>Don't have an account? <a href="/signup" class="signUp-link">Register now</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('partials/footer'); -%>
+
+<script>
+    function showPopup(message, popupId) {
+        var popup = document.getElementById(popupId);
+        popup.textContent = message;
+        popup.style.display = "block";
+
+        // Hide the pop-up message after 3 seconds
+        setTimeout(function() {
+            popup.style.display = "none";
+        }, 3000); // Adjust the duration as needed
+    }
+
+    function validateForm() {
+        var email = document.getElementById('email').value;
+        var password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            alert("Email and password are required.");
+            return false;
+        }
+
+        // If the form is valid, display the popup message
+        showPopup('Logging in...', 'login-popup');
+        return true;
+    }
+</script>
