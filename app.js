@@ -1,14 +1,30 @@
 const express = require("express");
-
 const bodyParser = require("body-parser");
-
 const mongoose = require("mongoose");
-
 const bcrypt = require('bcrypt');
+const User = require("./models/userModel");
+const session = require('express-session');
+
 const saltRounds = 10;
 
-const app = express();
+const requireLogin = (req, res, next) => {
+    if (req.session && req.session.user) {
+        next();
+    } else {
+        req.session.message = {
+            type: 'danger',
+            message: 'You must be logged in to view this page',
+        };
+        res.redirect('/');
+    }
+};
 
+const app = express();
+app.use(session({
+    secret: '44Rx8eLKuL',
+    resave: false,
+    saveUninitialized: false
+}));
 
 mongoose.connect('mongodb+srv://alson1209:blackassasin12@cluster0.ay6lplz.mongodb.net/Cluster0' );
 
@@ -22,20 +38,13 @@ const mySchema = new mongoose.Schema({
     item: String
 });
 
-const mySchema2 = new mongoose.Schema({
-    email: String,
-    password: String
-});
-
 const Mymodel = mongoose.model('Item', mySchema);
 
-const Mymodel2 = mongoose.model('user', mySchema2);
-
 app.get("/", (req, res) => {
-    res.render("home");
+    res.render("signin");
 });
 
-app.get("/list", async (req, res) => {
+app.get("/list", requireLogin, async (req, res) => {
 
     var date = new Date();
     var day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -66,65 +75,36 @@ app.get("/signup", (req, res) => {
     res.render("signup");
 });
 
-app.post("/signup", (req, res) => {
-    // Check if both email and password fields are provided
-    if (!req.body.email || !req.body.password) {
-        return res.status(400).send("Email and password are required.");
-    }
+app.post('/signup', async (req, res) => {
+    const {email, password} = req.body;
 
-    bcrypt.hash(req.body.password, saltRounds, async function(err, hash) {
-        if (err) {
-            console.error("Error hashing password:", err);
-            return res.status(500).send("Internal Server Error");
-        }
-               
-        let newUser = new Mymodel2({
-            email: req.body.email,
-            password: hash
-        });
+    try {
+        const existingUser = await User.findOne({email});
+        if(existingUser) return res.status(400).json({error: 'Username is already taken.'});
     
-        try {
-            await newUser.save();
-            res.redirect("/list");
-        } catch (error) {
-            console.error("Error saving user:", error);
-            res.status(500).send("Internal Server Error");
-        }
-    });
+        const user = new User({email, password});
+        const savedUser = await user.save();
+    
+        req.session.user = savedUser;
+        return res.redirect('/list');
+    } catch (err) {
+        res.status(500).json({error: 'Server error, please try again.'});
+    }
 });
 
 app.post("/signin", async (req, res) => {
-    const checkEmail = req.body.email;
-    const checkPassword = req.body.password;
-
-    // Check if email or password is missing
-    if (!checkEmail || !checkPassword) {
-        return res.status(400).send("Email and password are required.");
-    }
-
     try {
-        const foundNewUser = await Mymodel2.findOne({ email: checkEmail });
+        const user = await User.collection.findOne({email: req.body.email});
+        if(!user) return res.status(400).send("Username not found!");
+        if(user.password !== req.body.password) return res.status(400).send("Wrong password!");
 
-        // Check if user with the provided email exists
-        if (!foundNewUser) {
-            return res.status(404).send("User not found.");
-        }
-
-        bcrypt.compare(checkPassword, foundNewUser.password, function(err, result) {
-            if (result === true) {
-                res.redirect("/list");
-            } else {
-                res.status(401).send("Incorrect password.");
-            }
-        });
-
-    } catch (error) {
-        console.log("error is :" + error);
-        res.status(500).send("Internal server error.");
+        req.session.user = user;
+        return res.redirect("/list");
+    } catch(e) {
+        console.log(e);
+        res.status(500).send("Error Occurred!");
     }
 });
-
-
 
 app.post("/list", async (req, res) => {
 
@@ -137,7 +117,6 @@ app.post("/list", async (req, res) => {
     res.redirect("/list");
 
 });
-
 
 app.post("/delete", async (req, res) => {
 
@@ -166,20 +145,15 @@ app.post("/update/:id", async (req, res) => {
 
 });
 
-const session = require('express-session');
-
-app.use(session({
-    secret: '44Rx8eLKuL',
-    resave: false,
-    saveUninitialized: false
-}));
-
-app.get("/logout", (req, res) => {
-    req.session.destroy(); // Destroy the session
-    res.redirect("/signin");
+app.get('/logout', (req, res) => {
+    req.session.destroy(function(err) {
+        if (err) {
+            return res.redirect('/signin');
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    })
 });
-
-
 
 const port = process.env.PORT || 5000;
 
